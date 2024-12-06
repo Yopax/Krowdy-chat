@@ -1,25 +1,10 @@
 import { gql } from "apollo-server-express";
 
 const typeDefs = gql`
-  scalar Date
 
-  type User {
-    id: ID!
-    firstName: String
-    lastName: String
-    email: String
-  }
-
-  type Message {
-    id: ID!
-    text: String!
-    receiverId: Int!
-    senderId: Int!
-    createdAt: Date!
-  }
-
-  type Token {
-    token: String!
+  type Query {
+    users: [User]
+    messagesByUser(receiverId: Int!): [Message]
   }
 
   input UserInput {
@@ -34,9 +19,16 @@ const typeDefs = gql`
     password: String!
   }
 
-  type Query {
-    users: [User]
-    messagesByUser(receiverId: Int!): [Message]
+  type Token {
+    token: String!
+  }
+
+  type Message {
+    id: ID!
+    text: String!
+    receiverId: Int!
+    senderId: Int!
+    createdAt: Date!
   }
 
   type Mutation {
@@ -45,9 +37,18 @@ const typeDefs = gql`
     createMessage(receiverId: Int!, text: String!): Message
   }
 
+  type User {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    email: String!
+  }
+
   type Subscription {
     messageAdded: Message
   }
+
+  scalar Date
 `;
 
 export default typeDefs;

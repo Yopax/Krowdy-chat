@@ -10,16 +10,7 @@ import { split } from "@apollo/client";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
 import { setContext } from "@apollo/client/link/context";
-
-const httpLink = new HttpLink({
-  uri: "http://localhost:4000/graphql",
-});
-
-const wsLink = new GraphQLWsLink(
-  createClient({
-    url: "ws://localhost:4000/graphql",
-  })
-);
+import { onError } from "@apollo/client/link/error";
 
 const authLink = setContext((_, { headers }) => {
   return {
@@ -30,6 +21,33 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
+const httpLink = new HttpLink({
+  uri: "http://localhost:4000/graphql",
+});
+
+const wsLink = new GraphQLWsLink(
+  createClient({
+    url: "ws://localhost:4000/graphql",
+    connectionParams: {
+      authorization: localStorage.getItem("jwt") || "",
+    },
+    retryAttempts: 5, 
+    lazy: true, 
+  })
+);
+const errorLink = onError(({ graphQLErrors, networkError }) => {
+  if (graphQLErrors) {
+    graphQLErrors.forEach(({ message, locations, path }) => {
+      console.error(
+        `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
+      );
+    });
+  }
+
+  if (networkError) {
+    console.error(`[Network error]: ${networkError}`);
+  }
+});
 const splitLink = split(
   ({ query }) => {
     const definition = getMainDefinition(query);
@@ -39,7 +57,7 @@ const splitLink = split(
     );
   },
   wsLink,
-  authLink.concat(httpLink)
+  errorLink.concat(authLink.concat(httpLink)) 
 );
 
 const client = new ApolloClient({
@@ -56,5 +74,3 @@ createRoot(document.getElementById("root")!).render(
     </BrowserRouter>
   </StrictMode>
 );
-
-

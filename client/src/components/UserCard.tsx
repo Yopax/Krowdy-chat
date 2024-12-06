@@ -16,7 +16,6 @@ function UserCard({ item: { firstName, lastName, id } }: UserCardProps) {
         <h2 className="text-gray-800 inter">
           {firstName} {lastName}
         </h2>
-        {/*ultimo mensaje de la conversacion tipo whasat o messenger*/}
       </div>
     </>
   );

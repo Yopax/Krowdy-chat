@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, useSubscription } from "@apollo/client";
 import { GET_MSG } from "../graphql/queries";
 import { SEND_MSG } from "../graphql/mutations";
 import MessageCard from "./MessageCard";
@@ -6,27 +6,32 @@ import { IoMdSend } from "react-icons/io";
 import { useParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import MessageProps from "../interface/MessageProps";
+import { MSG_SUB } from "../graphql/subscriptions";
 
-function ChatScreen() {
-  const { id, name } = useParams(); // ID del receptor y nombre
+const ChatScreen = () => {
+  const { id, name } = useParams();
   const [text, setText] = useState("");
   const [messages, setMessages] = useState<MessageProps[]>([]);
-  const bottomRef = useRef(null); // Referencia para el final del scroll
+  const bottomRef = useRef(null);
 
-  // Consultar mensajes con polling
-  const { data, loading, error, startPolling, stopPolling } = useQuery(GET_MSG, {
-    variables: { receiverId: parseInt(id) },
-    onCompleted: (data) => setMessages(data.messagesByUser || []),
+  const { data, loading, error } = useQuery(GET_MSG, {
+    variables: {
+      receiverId: +id,
+    },
+    onCompleted(data) {
+      setMessages(data.messagesByUser);
+    },
+    pollInterval: 2000, 
   });
 
-  useEffect(() => {
-    startPolling(2000);
-    return () => stopPolling();
-  }, [startPolling, stopPolling]);
-
-  // Enviar mensaje
   const [sendMessage] = useMutation(SEND_MSG, {
     onCompleted: (data) => {
+      setMessages((prevMessages) => [...prevMessages, data.createMessage]);
+    },
+  });
+
+  useSubscription(MSG_SUB, {
+    onSubscriptionData({ subscriptionData: { data } }) {
       setMessages((prevMessages) => [...prevMessages, data.createMessage]);
     },
   });
@@ -72,7 +77,6 @@ function ChatScreen() {
             />
           ))
         )}
-        {/* Referencia para el scroll automático */}
         <div ref={bottomRef} />
       </div>
 
@@ -99,6 +103,6 @@ function ChatScreen() {
       </div>
     </div>
   );
-}
+};
 
 export default ChatScreen;

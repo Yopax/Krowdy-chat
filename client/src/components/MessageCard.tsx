@@ -1,6 +1,6 @@
-import MessageCardProps from "../interface/MessageCard";
+import MessageCardProps from "../interface/MessageCardProps";
 
-const MessageCard: React.FC<MessageCardProps> = ({ text, direc, date }) => {
+const MessageCard: React.FC<MessageCardProps> = ({ text, direc, date,  }) => {
   return (
     <div
       className={`flex w-full mb-2 ${
